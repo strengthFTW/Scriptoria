@@ -370,9 +370,9 @@ function App() {
                       </div>
                     )}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '40px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
                     {Object.entries(isEditMode ? editedResult.screenplay.threeActStructure : result.screenplay.threeActStructure).map(([key, act]) => (
-                      <div key={key}>
+                      <div key={key} style={{ borderLeft: '4px solid var(--retro-red)', paddingLeft: '24px' }}>
                         <span className="act-tag">{key}</span>
                         {isEditMode ? (
                           <>
@@ -384,7 +384,7 @@ function App() {
                                 updated.screenplay.threeActStructure[key].title = e.target.value;
                                 setEditedResult(updated);
                               }}
-                              style={{ fontSize: '20px', borderBottom: '1px solid black', paddingBottom: '8px', marginBottom: '16px', width: '100%', fontWeight: '700' }}
+                              style={{ fontSize: '24px', borderBottom: '2px solid black', paddingBottom: '12px', marginBottom: '16px', marginTop: '12px', width: '100%', fontWeight: '700', fontFamily: 'Spectral, serif', letterSpacing: '0.5px' }}
                             />
                             <textarea
                               value={act.description}
@@ -393,18 +393,21 @@ function App() {
                                 updated.screenplay.threeActStructure[key].description = e.target.value;
                                 setEditedResult(updated);
                               }}
-                              style={{ fontSize: '14px', fontWeight: '600', opacity: 0.8, lineHeight: 1.6, border: '1px dashed #ccc', padding: '8px', width: '100%', minHeight: '80px', resize: 'vertical' }}
+                              style={{ fontSize: '15px', fontWeight: '600', opacity: 0.8, lineHeight: 1.7, border: '1px dashed #ccc', padding: '12px', width: '100%', minHeight: '100px', resize: 'vertical', marginBottom: '16px' }}
                             />
                           </>
                         ) : (
                           <>
-                            <h3 style={{ fontSize: '20px', borderBottom: '1px solid black', paddingBottom: '8px', marginBottom: '16px' }}>{act.title}</h3>
-                            <p style={{ fontSize: '14px', fontWeight: '600', opacity: 0.8, lineHeight: 1.6 }}>{act.description}</p>
+                            <h3 style={{ fontSize: '24px', borderBottom: '2px solid black', paddingBottom: '12px', marginBottom: '16px', marginTop: '12px', fontFamily: 'Spectral, serif', letterSpacing: '0.5px' }}>{act.title}</h3>
+                            <p style={{ fontSize: '15px', fontWeight: '600', opacity: 0.8, lineHeight: 1.7, marginBottom: '16px' }}>{act.description}</p>
                           </>
                         )}
                         <ul style={{ listStyle: 'none', marginTop: '16px' }}>
                           {act.keyEvents.map((event, i) => (
-                            <li key={i} style={{ fontSize: '12px', fontWeight: '700', marginBottom: '8px', display: 'flex', gap: '8px' }}>• <span>{event}</span></li>
+                            <li key={i} style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', display: 'flex', gap: '12px', paddingLeft: '8px' }}>
+                              <span style={{ color: 'var(--retro-red)', fontWeight: '900' }}>•</span>
+                              <span>{event}</span>
+                            </li>
                           ))}
                         </ul>
                       </div>
