@@ -19,6 +19,21 @@ from utils.text_extractor import extract_text_from_pdf, extract_text_from_docx, 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
+@app.route('/')
+def home():
+    """Root endpoint to verify backend is running"""
+    return jsonify({
+        "message": "🎬 Scriptoria Backend API",
+        "status": "running",
+        "version": "1.0.0",
+        "endpoints": {
+            "/health": "Health check",
+            "/generate": "Generate screenplay (POST)",
+            "/upload": "Upload script file (POST)",
+            "/export_pdf": "Export to PDF (POST)"
+        }
+    })
+
 @app.route('/generate', methods=['POST'])
 def generate():
     """
