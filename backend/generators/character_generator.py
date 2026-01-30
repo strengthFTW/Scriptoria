@@ -5,6 +5,7 @@ Generates character profiles based on screenplay
 import json
 import re
 from utils.ai_client import get_ai_client
+from utils.json_helper import safe_parse_json
 
 def generate_characters(screenplay_data: dict) -> list:
     """
@@ -21,42 +22,41 @@ def generate_characters(screenplay_data: dict) -> list:
     title = screenplay_data.get('title', 'Untitled')
     logline = screenplay_data.get('logline', '')
     genre = screenplay_data.get('genre', 'Drama')
+    main_characters = screenplay_data.get('mainCharacters', [])
     
-    prompt = f"""You are a character development expert. Based on this screenplay outline, create 3-5 compelling character profiles.
+    # Extract character names from the screenplay
+    character_names_str = ", ".join(main_characters) if main_characters else "the main characters"
+    
+    prompt = f"""You are a character development expert. Based on this screenplay outline, create detailed character profiles.
 
 Title: {title}
 Logline: {logline}
 Genre: {genre}
+Main Characters: {character_names_str}
+
+CRITICAL: You MUST use the EXACT character names listed above: {character_names_str}
+Do NOT create new character names. Only develop profiles for the characters already named in the outline.
 
 Generate character profiles in this JSON format:
 
 [
     {{
-        "name": "Character name",
+        "name": "EXACT name from the Main Characters list above",
         "role": "Protagonist/Antagonist/Supporting",
         "arc": "Brief description of their character arc",
         "traits": ["Trait 1", "Trait 2", "Trait 3"]
     }}
 ]
 
-Create diverse, three-dimensional characters that fit the story. Return ONLY the JSON array, no additional text."""
+Create 3-5 diverse, three-dimensional characters that fit the story. Return ONLY the JSON array, no additional text."""
 
     try:
         response = client.generate(prompt)
-        
-        # Extract JSON from response
-        json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', response, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(1)
-        else:
-            json_match = re.search(r'\[.*\]', response, re.DOTALL)
-            json_str = json_match.group(0) if json_match else response
-        
-        characters = json.loads(json_str)
-        return characters
+        return safe_parse_json(response)
         
     except json.JSONDecodeError as e:
         print(f"❌ JSON parsing error: {e}")
+        print(f"Response: {response[:500]}...")
         raise Exception("Failed to parse AI response as JSON")
     except Exception as e:
         print(f"❌ Generation error: {e}")

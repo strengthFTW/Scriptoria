@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
+import io
 from datetime import datetime
 
 # Load environment variables
@@ -10,6 +11,10 @@ load_dotenv()
 # Import generators
 from generators.screenplay_generator import generate_screenplay
 from generators.character_generator import generate_characters
+from generators.scene_generator import generate_scenes
+from generators.sound_design_generator import generate_sound_design
+from utils.pdf_generator import generate_pdf
+from utils.text_extractor import extract_text_from_pdf, extract_text_from_docx, clean_text
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
@@ -63,10 +68,22 @@ def generate():
         characters = generate_characters(screenplay_data)
         print("✅ Characters generated!")
         
+        # Generate scenes using AI
+        print("⏳ Generating scene breakdown...")
+        scenes = generate_scenes(screenplay_data, characters)
+        print("✅ Scenes generated!")
+        
+        # Generate sound design using AI
+        print("⏳ Generating sound design...")
+        sound_design = generate_sound_design(screenplay_data, scenes)
+        print("✅ Sound design generated!")
+        
         response = {
             "success": True,
             "screenplay": screenplay_data,
             "characters": characters,
+            "scenes": scenes,
+            "soundDesign": sound_design,
             "timestamp": datetime.now().isoformat()
         }
         
@@ -91,6 +108,68 @@ def generate():
             "error": "Failed to generate screenplay. Please try again.",
             "details": error_msg
         }), 500
+
+@app.route('/export_pdf', methods=['POST'])
+def export_pdf():
+    """
+    Export screenplay package to PDF
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+            
+        pdf_buffer = generate_pdf(data)
+        
+        filename = f"Scriptoria_{data['screenplay'].get('title', 'Script')}.pdf"
+        filename = "".join(x for x in filename if x.isalnum() or x in "._- ")
+        
+        return send_file(
+            pdf_buffer,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        print(f"❌ PDF Export error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    """Handle file upload and extract text."""
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    if file:
+        filename = file.filename.lower()
+        try:
+            file_stream = io.BytesIO(file.read())
+            
+            if filename.endswith('.pdf'):
+                raw_text = extract_text_from_pdf(file_stream)
+            elif filename.endswith(('.doc', '.docx')):
+                raw_text = extract_text_from_docx(file_stream)
+            else:
+                return jsonify({"error": "Unsupported file format. Please upload PDF or DOCX."}), 400
+            
+            extracted_text = clean_text(raw_text)
+            
+            if len(extracted_text) < 20:
+                return jsonify({"error": "Extracting text failed or content too short (min 20 chars)."}), 400
+            
+            return jsonify({
+                "success": True,
+                "extracted_text": extracted_text[:2000],  # Limit to 2000 chars for safety
+                "full_length": len(extracted_text)
+            })
+            
+        except Exception as e:
+            print(f"❌ Upload error: {str(e)}")
+            return jsonify({"error": f"Failed to process file: {str(e)}"}), 500
 
 @app.route('/health', methods=['GET'])
 def health():

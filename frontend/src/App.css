@@ -10,13 +10,13 @@
   --lavender: #D4A5FF;
   --lemon: #FFF59D;
   --rose: #F8B4D9;
-  
+
   /* Retro Colors */
   --retro-orange: #FF9F1C;
   --retro-teal: #2EC4B6;
   --retro-purple: #9D4EDD;
   --retro-pink: #FF006E;
-  
+
   /* Neutrals */
   --white: #FFFFFF;
   --light-gray: #F5F5F5;
@@ -59,7 +59,7 @@ body {
   background-clip: text;
   margin-bottom: 0.5rem;
   animation: colorShift 3s ease infinite;
-  text-shadow: 3px 3px 0px rgba(0,0,0,0.1);
+  text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.1);
 }
 
 .subtitle {
@@ -74,7 +74,7 @@ body {
   background: var(--white);
   padding: 2.5rem;
   border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   margin-bottom: 2rem;
   animation: fadeInUp 0.8s ease-out;
   border: 3px solid var(--peach);
@@ -201,7 +201,7 @@ body {
   border-radius: 20px;
   margin-bottom: 1.5rem;
   border: 3px solid var(--lavender);
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 }
 
 .section-title {
@@ -303,12 +303,243 @@ body {
   border: 2px solid var(--retro-pink);
 }
 
+/* Scenes */
+.scenes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.scene-card {
+  background: linear-gradient(135deg, var(--lemon), var(--cream));
+  padding: 1.5rem;
+  border-radius: 15px;
+  border-left: 5px solid var(--retro-orange);
+  transition: transform 0.3s ease;
+}
+
+.scene-card:hover {
+  transform: translateX(5px);
+}
+
+.scene-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.scene-number {
+  font-family: 'Righteous', cursive;
+  background: var(--retro-purple);
+  color: var(--white);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.scene-location {
+  font-weight: 600;
+  color: var(--retro-teal);
+  font-size: 1.1rem;
+}
+
+.scene-time {
+  background: var(--sky-blue);
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  color: var(--dark-text);
+}
+
+.scene-characters {
+  margin-bottom: 0.8rem;
+  color: var(--retro-purple);
+  font-size: 0.95rem;
+}
+
+.scene-action {
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.scene-duration {
+  display: inline-block;
+  background: var(--peach);
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  color: var(--dark-text);
+  font-weight: 600;
+}
+
+/* Sound Design */
+.sound-card {
+  background: linear-gradient(135deg, var(--lavender), var(--rose));
+  padding: 1.5rem;
+  border-radius: 15px;
+  margin-bottom: 1.5rem;
+  border: 3px solid var(--retro-purple);
+}
+
+.music-theme {
+  background: linear-gradient(135deg, var(--peach), var(--coral));
+}
+
+.sound-subtitle {
+  font-family: 'Righteous', cursive;
+  color: var(--retro-purple);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.music-details p {
+  margin-bottom: 0.8rem;
+  line-height: 1.6;
+}
+
+.instruments,
+.references {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.instrument-tag,
+.reference-tag {
+  background: var(--white);
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: var(--retro-teal);
+  font-weight: 600;
+  border: 2px solid var(--retro-teal);
+}
+
+.reference-tag {
+  color: var(--retro-orange);
+  border-color: var(--retro-orange);
+}
+
+/* Sound Effects */
+.sfx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sfx-item {
+  background: var(--white);
+  padding: 1rem;
+  border-radius: 10px;
+  border-left: 4px solid var(--retro-pink);
+}
+
+.sfx-category {
+  display: inline-block;
+  background: var(--retro-pink);
+  color: var(--white);
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.sfx-description {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.sfx-scenes {
+  font-size: 0.85rem;
+  color: var(--retro-purple);
+  font-weight: 600;
+}
+
+/* Ambience */
+.ambience-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.ambience-item {
+  background: var(--white);
+  padding: 1rem;
+  border-radius: 10px;
+  border-top: 4px solid var(--retro-teal);
+}
+
+.ambience-item strong {
+  color: var(--retro-teal);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.ambience-item p {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.amb-mood {
+  display: inline-block;
+  background: var(--mint);
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  color: var(--dark-text);
+  font-weight: 600;
+}
+
+/* Key Moments */
+.key-moments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.moment-item {
+  background: var(--white);
+  padding: 1.2rem;
+  border-radius: 10px;
+  border-left: 5px solid var(--retro-orange);
+}
+
+.moment-scene {
+  display: inline-block;
+  background: var(--retro-orange);
+  color: var(--white);
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.moment-description {
+  margin: 0.8rem 0;
+  font-weight: 600;
+  color: var(--retro-purple);
+}
+
+.moment-sound {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--dark-text);
+}
+
 /* Animations */
 @keyframes fadeInDown {
   from {
     opacity: 0;
     transform: translateY(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -320,6 +551,7 @@ body {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -327,18 +559,31 @@ body {
 }
 
 @keyframes colorShift {
-  0%, 100% {
+
+  0%,
+  100% {
     filter: hue-rotate(0deg);
   }
+
   50% {
     filter: hue-rotate(20deg);
   }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  75% { transform: translateX(10px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-10px);
+  }
+
+  75% {
+    transform: translateX(10px);
+  }
 }
 
 /* Responsive */
@@ -346,11 +591,11 @@ body {
   .title {
     font-size: 2.5rem;
   }
-  
+
   .form {
     padding: 1.5rem;
   }
-  
+
   .characters-grid {
     grid-template-columns: 1fr;
   }
