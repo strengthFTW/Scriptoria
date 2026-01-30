@@ -35,7 +35,7 @@ GROQ_API_KEY=your_groq_api_key_here
 ### D. Deploy
 1. Click **"Create Web Service"**
 2. Wait 2-3 minutes for deployment
-3. Copy your backend URL (e.g., `https://scriptoria-backend.onrender.com`)
+3. Copy your backend URL (e.g., `https://scriptoria-ua29.onrender.com`)
 
 ---
 
@@ -45,7 +45,7 @@ GROQ_API_KEY=your_groq_api_key_here
 1. Go to `frontend/src/App.jsx`
 2. Change line 5:
    ```javascript
-   const API_BASE = 'https://scriptoria-backend.onrender.com';
+   const API_BASE = 'https://scriptoria-ua29.onrender.com';
    ```
 
 ### B. Commit and Push
@@ -80,7 +80,7 @@ git push origin main
 
 1. **Test Backend**:
    ```bash
-   curl https://scriptoria-backend.onrender.com/health
+   curl https://scriptoria-ua29.onrender.com/health
    ```
    Should return: `{"status": "healthy"}`
 
@@ -158,7 +158,7 @@ git push origin main
 
 After deployment, update these:
 - **Frontend**: https://scriptoria-xxx.vercel.app
-- **Backend**: https://scriptoria-backend.onrender.com
+- **Backend**: https://scriptoria-ua29.onrender.com
 - **GitHub**: https://github.com/strengthFTW/Scriptoria
 
 ---
