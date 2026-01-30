@@ -17,7 +17,17 @@ from utils.pdf_generator import generate_pdf
 from utils.text_extractor import extract_text_from_pdf, extract_text_from_docx, clean_text
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+
+# Enhanced CORS configuration for production
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type"],
+        "supports_credentials": False
+    }
+})
 
 @app.route('/')
 def home():
