@@ -21,48 +21,57 @@ class AIClient:
         
         # Groq client - OpenAI compatible
         self.client = Groq(api_key=self.api_key, http_client=http_client)
-        self.model = "llama-3.3-70b-versatile"  # Fast and creative
-    
     def generate(self, prompt: str, max_retries: int = 2, json_mode: bool = False) -> Optional[str]:
         """
-        Generate content using Groq API
-        
-        Args:
-            prompt: The prompt to send to the AI
-            max_retries: Number of retries on failure
-            json_mode: If True, force output to be a valid JSON object
-            
-        Returns:
-            Generated text or None on failure
+        Generate content with automatic model fallback for rate limits.
         """
-        for attempt in range(max_retries + 1):
-            try:
-                # Add JSON instructions to system prompt if json_mode is on
-                system_content = "You are a professional screenplay writer and story consultant."
-                if json_mode:
-                    system_content += " You MUST respond with a valid JSON object ONLY. No other text."
-
-                params = {
-                    "model": self.model,
-                    "messages": [
-                        {"role": "system", "content": system_content},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.8 if json_mode else 0.9,
-                    "max_tokens": 4096 if json_mode else 2048,
-                }
-
-                if json_mode:
-                    params["response_format"] = {"type": "json_object"}
-
-                response = self.client.chat.completions.create(**params)
-                return response.choices[0].message.content
-            except Exception as e:
-                print(f"⚠️  Attempt {attempt + 1} failed: {str(e)}")
-                if attempt == max_retries:
-                    raise Exception(f"Failed to generate content after {max_retries + 1} attempts: {str(e)}")
+        # List of models to try in order of preference
+        models = [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-70b-versatile",
+            "mixtral-8x7b-32768",
+            "llama-3.1-8b-instant"
+        ]
         
-        return None
+        last_error = None
+        
+        for model in models:
+            for attempt in range(max_retries + 1):
+                try:
+                    system_content = "You are a professional screenplay writer and story consultant."
+                    if json_mode:
+                        system_content += " You MUST respond with a valid JSON object ONLY. No other text."
+
+                    params = {
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": system_content},
+                            {"role": "user", "content": prompt}
+                        ],
+                        "temperature": 0.8 if json_mode else 0.9,
+                        "max_tokens": 4096 if json_mode else 2048,
+                    }
+
+                    if json_mode:
+                        params["response_format"] = {"type": "json_object"}
+
+                    response = self.client.chat.completions.create(**params)
+                    return response.choices[0].message.content
+                
+                except Exception as e:
+                    last_error = e
+                    error_msg = str(e).lower()
+                    
+                    # If it's a rate limit (429), try the next model immediately
+                    if "rate_limit_exceeded" in error_msg or "429" in error_msg:
+                        print(f"⚠️  Rate limit on {model}, trying next available model...")
+                        break # Break inner loop to try next model
+                    
+                    print(f"⚠️  Attempt {attempt + 1} with {model} failed: {str(e)}")
+                    if attempt == max_retries:
+                        print(f"❌ All retries for {model} failed.")
+        
+        raise Exception(f"AI Generation failed across all fallback models. Last error: {str(last_error)}")
 
 # Global client instance
 _client = None
