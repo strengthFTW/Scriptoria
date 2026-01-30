@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './index.css';
 
-const API_BASE = 'https://scriptoria-backend.onrender.com';
+const API_BASE = 'https://scriptoria-ua29.onrender.com';
 
 function App() {
   const [storyIdea, setStoryIdea] = useState('');
