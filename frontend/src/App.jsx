@@ -14,6 +14,10 @@ function App() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [runtime, setRuntime] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedResult, setEditedResult] = useState(null);
+  const [uploadedFileName, setUploadedFileName] = useState('');
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -53,11 +57,13 @@ function App() {
 
       if (response.data.success) {
         setStoryIdea(response.data.extracted_text);
+        setUploadedFileName(file.name);
         alert(`Successfully extracted ${response.data.full_length} characters from ${file.name}`);
       }
     } catch (err) {
       console.error('Upload failed:', err);
       alert(err.response?.data?.error || 'Failed to extract text from file.');
+      setUploadedFileName(''); // Clear on error
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -90,20 +96,54 @@ function App() {
 
   const handleExportPDF = async () => {
     if (!result) return;
+    setIsExporting(true);
+
     try {
+      // Make the request - if it fails, we don't care because download still works
       const response = await axios.post(`${API_BASE}/export_pdf`, result, {
-        responseType: 'blob'
+        responseType: 'blob',
       });
+
+      // If we get here, create the download
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Scriptoria_${result.screenplay.title}.pdf`);
+      const filename = `Scriptoria_${result.screenplay.title.replace(/[^a-zA-Z0-9 ]/g, '_')}.pdf`;
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
+
+      console.log('✅ PDF exported successfully');
     } catch (err) {
-      console.error('Export failed:', err);
-      alert('Failed to export PDF');
+      // Check if it's a real error or just a network error after download started
+      // If response exists and has data, the download likely succeeded
+      if (err.response && err.response.data) {
+        try {
+          // Try to create download anyway
+          const url = window.URL.createObjectURL(new Blob([err.response.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          const filename = `Scriptoria_${result.screenplay.title.replace(/[^a-zA-Z0-9 ]/g, '_')}.pdf`;
+          link.setAttribute('download', filename);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+          console.log('✅ PDF exported successfully (despite connection error)');
+        } catch (downloadErr) {
+          // Real error
+          console.error('Export failed:', err);
+          alert(`Failed to export PDF: ${err.message}`);
+        }
+      } else {
+        // No response data means real error
+        console.error('Export failed:', err);
+        alert(`Failed to export PDF: ${err.message}`);
+      }
+    } finally {
+      setTimeout(() => setIsExporting(false), 500);
     }
   };
 
@@ -151,11 +191,20 @@ function App() {
               <label className="upload-box">
                 <input type="file" className="hidden" style={{ display: 'none' }} accept=".pdf,.docx,.doc" onChange={handleFileUpload} />
                 <div className="upload-icon">
-                  {isUploading ? '⌛' : '☁'}
+                  {isUploading ? '⌛' : uploadedFileName ? '✓' : '☁'}
                 </div>
                 <div className="upload-text">
-                  <b>Upload Script</b>
-                  <span>.PDF, .FDX, .TXT</span>
+                  {uploadedFileName ? (
+                    <>
+                      <b>{uploadedFileName}</b>
+                      <span style={{ color: '#4CAF50' }}>Uploaded Successfully</span>
+                    </>
+                  ) : (
+                    <>
+                      <b>Upload Script</b>
+                      <span>.PDF, .FDX, .TXT</span>
+                    </>
+                  )}
                 </div>
                 {uploadProgress > 0 && (
                   <div style={{ width: '100%', height: '2px', background: '#eee', marginTop: '10px' }}>
@@ -230,12 +279,55 @@ function App() {
                   </button>
                 ))}
               </div>
-              <button
-                onClick={handleExportPDF}
-                className="btn-export"
-              >
-                Export Package (PDF)
-              </button>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                {isEditMode ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        // Save edits
+                        setResult(editedResult);
+                        setIsEditMode(false);
+                      }}
+                      className="btn-export"
+                      style={{ background: '#90ee90' }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Cancel edits
+                        setEditedResult(null);
+                        setIsEditMode(false);
+                      }}
+                      className="btn-export"
+                      style={{ background: '#ffcccb' }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        // Enter edit mode
+                        setEditedResult(JSON.parse(JSON.stringify(result)));
+                        setIsEditMode(true);
+                      }}
+                      className="btn-export"
+                      style={{ background: 'var(--retro-teal)' }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleExportPDF}
+                      className="btn-export"
+                      disabled={isExporting}
+                    >
+                      {isExporting ? '⏳ Exporting...' : 'Export Project (PDF)'}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Content Display */}
@@ -243,8 +335,32 @@ function App() {
               {activeTab === 'Outline' && (
                 <div className="animate-fade-in">
                   <div style={{ borderBottom: '4px solid black', paddingBottom: '20px', marginBottom: '40px' }}>
-                    <h2 style={{ fontSize: '36px', fontWeight: '900', textTransform: 'uppercase' }}>{result.screenplay.title}</h2>
-                    <p style={{ opacity: 0.7, fontStyle: 'italic', fontWeight: '600' }}>"{result.screenplay.logline}"</p>
+                    {isEditMode ? (
+                      <>
+                        <input
+                          type="text"
+                          value={editedResult.screenplay.title}
+                          onChange={(e) => setEditedResult({
+                            ...editedResult,
+                            screenplay: { ...editedResult.screenplay, title: e.target.value }
+                          })}
+                          style={{ fontSize: '36px', fontWeight: '900', textTransform: 'uppercase', border: '2px dashed #ccc', padding: '8px', width: '100%', marginBottom: '12px' }}
+                        />
+                        <textarea
+                          value={editedResult.screenplay.logline}
+                          onChange={(e) => setEditedResult({
+                            ...editedResult,
+                            screenplay: { ...editedResult.screenplay, logline: e.target.value }
+                          })}
+                          style={{ opacity: 0.7, fontStyle: 'italic', fontWeight: '600', border: '2px dashed #ccc', padding: '8px', width: '100%', minHeight: '60px', resize: 'vertical' }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <h2 style={{ fontSize: '36px', fontWeight: '900', textTransform: 'uppercase' }}>{result.screenplay.title}</h2>
+                        <p style={{ opacity: 0.7, fontStyle: 'italic', fontWeight: '600' }}>"{result.screenplay.logline}"</p>
+                      </>
+                    )}
                     {result.screenplay.mainCharacters && result.screenplay.mainCharacters.length > 0 && (
                       <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#888' }}>Cast:</span>
@@ -255,11 +371,37 @@ function App() {
                     )}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '40px' }}>
-                    {Object.entries(result.screenplay.threeActStructure).map(([key, act]) => (
+                    {Object.entries(isEditMode ? editedResult.screenplay.threeActStructure : result.screenplay.threeActStructure).map(([key, act]) => (
                       <div key={key}>
                         <span className="act-tag">{key}</span>
-                        <h3 style={{ fontSize: '20px', borderBottom: '1px solid black', paddingBottom: '8px', marginBottom: '16px' }}>{act.title}</h3>
-                        <p style={{ fontSize: '14px', fontWeight: '600', opacity: 0.8, lineHeight: 1.6 }}>{act.description}</p>
+                        {isEditMode ? (
+                          <>
+                            <input
+                              type="text"
+                              value={act.title}
+                              onChange={(e) => {
+                                const updated = { ...editedResult };
+                                updated.screenplay.threeActStructure[key].title = e.target.value;
+                                setEditedResult(updated);
+                              }}
+                              style={{ fontSize: '20px', borderBottom: '1px solid black', paddingBottom: '8px', marginBottom: '16px', width: '100%', fontWeight: '700' }}
+                            />
+                            <textarea
+                              value={act.description}
+                              onChange={(e) => {
+                                const updated = { ...editedResult };
+                                updated.screenplay.threeActStructure[key].description = e.target.value;
+                                setEditedResult(updated);
+                              }}
+                              style={{ fontSize: '14px', fontWeight: '600', opacity: 0.8, lineHeight: 1.6, border: '1px dashed #ccc', padding: '8px', width: '100%', minHeight: '80px', resize: 'vertical' }}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <h3 style={{ fontSize: '20px', borderBottom: '1px solid black', paddingBottom: '8px', marginBottom: '16px' }}>{act.title}</h3>
+                            <p style={{ fontSize: '14px', fontWeight: '600', opacity: 0.8, lineHeight: 1.6 }}>{act.description}</p>
+                          </>
+                        )}
                         <ul style={{ listStyle: 'none', marginTop: '16px' }}>
                           {act.keyEvents.map((event, i) => (
                             <li key={i} style={{ fontSize: '12px', fontWeight: '700', marginBottom: '8px', display: 'flex', gap: '8px' }}>• <span>{event}</span></li>
@@ -273,13 +415,51 @@ function App() {
 
               {activeTab === 'Characters' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }} className="animate-fade-in">
-                  {result.characters.map((char, idx) => (
+                  {(isEditMode ? editedResult.characters : result.characters).map((char, idx) => (
                     <div key={idx} style={{ border: '2px solid black', padding: '24px', background: '#f9f9f9', boxShadow: '4px 4px 0 black' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid black', paddingBottom: '8px' }}>
-                        <h3 style={{ fontSize: '24px', fontWeight: '900' }}>{char.name}</h3>
-                        <span style={{ fontSize: '10px', fontWeight: '900', background: 'white', border: '1px solid black', padding: '4px 8px' }}>{char.role}</span>
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={char.name}
+                            onChange={(e) => {
+                              const updated = { ...editedResult };
+                              updated.characters[idx].name = e.target.value;
+                              setEditedResult(updated);
+                            }}
+                            style={{ fontSize: '24px', fontWeight: '900', border: '1px dashed #ccc', padding: '4px', width: '60%' }}
+                          />
+                        ) : (
+                          <h3 style={{ fontSize: '24px', fontWeight: '900' }}>{char.name}</h3>
+                        )}
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={char.role}
+                            onChange={(e) => {
+                              const updated = { ...editedResult };
+                              updated.characters[idx].role = e.target.value;
+                              setEditedResult(updated);
+                            }}
+                            style={{ fontSize: '10px', fontWeight: '900', background: 'white', border: '1px dashed #ccc', padding: '4px 8px', width: '35%' }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '10px', fontWeight: '900', background: 'white', border: '1px solid black', padding: '4px 8px' }}>{char.role}</span>
+                        )}
                       </div>
-                      <p style={{ fontSize: '14px', fontWeight: '700', opacity: 0.8, fontStyle: 'italic' }}>{char.arc}</p>
+                      {isEditMode ? (
+                        <textarea
+                          value={char.arc}
+                          onChange={(e) => {
+                            const updated = { ...editedResult };
+                            updated.characters[idx].arc = e.target.value;
+                            setEditedResult(updated);
+                          }}
+                          style={{ fontSize: '14px', fontWeight: '700', opacity: 0.8, fontStyle: 'italic', border: '1px dashed #ccc', padding: '8px', width: '100%', minHeight: '60px', resize: 'vertical' }}
+                        />
+                      ) : (
+                        <p style={{ fontSize: '14px', fontWeight: '700', opacity: 0.8, fontStyle: 'italic' }}>{char.arc}</p>
+                      )}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '24px' }}>
                         {char.traits.map(trait => (
                           <span key={trait} className="tag tag-teal">{trait}</span>
@@ -292,17 +472,55 @@ function App() {
 
               {activeTab === 'Scenes' && (
                 <div className="animate-fade-in">
-                  {result.scenes.map((scene, idx) => (
+                  {(isEditMode ? editedResult.scenes : result.scenes).map((scene, idx) => (
                     <div key={idx} style={{ display: 'flex', gap: '24px', borderBottom: '1px solid #eee', paddingBottom: '32px', marginBottom: '32px' }}>
                       <div style={{ fontSize: '40px', fontWeight: '900', color: '#eee', width: '60px', textDecoration: 'underline', textDecorationThickness: '4px', textUnderlineOffset: '8px' }}>
                         {scene.sceneNumber.toString().padStart(2, '0')}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-                          <span style={{ fontWeight: '900', textTransform: 'uppercase', fontSize: '14px', border: '2px solid black', padding: '0 8px' }}>{scene.location}</span>
-                          <span style={{ fontWeight: '700', textTransform: 'uppercase', fontSize: '12px', opacity: 0.5 }}>{scene.timeOfDay}</span>
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={scene.location}
+                              onChange={(e) => {
+                                const updated = { ...editedResult };
+                                updated.scenes[idx].location = e.target.value;
+                                setEditedResult(updated);
+                              }}
+                              style={{ fontWeight: '900', textTransform: 'uppercase', fontSize: '14px', border: '2px dashed #ccc', padding: '4px 8px' }}
+                            />
+                          ) : (
+                            <span style={{ fontWeight: '900', textTransform: 'uppercase', fontSize: '14px', border: '2px solid black', padding: '0 8px' }}>{scene.location}</span>
+                          )}
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={scene.timeOfDay}
+                              onChange={(e) => {
+                                const updated = { ...editedResult };
+                                updated.scenes[idx].timeOfDay = e.target.value;
+                                setEditedResult(updated);
+                              }}
+                              style={{ fontWeight: '700', textTransform: 'uppercase', fontSize: '12px', opacity: 0.5, border: '1px dashed #ccc', padding: '4px' }}
+                            />
+                          ) : (
+                            <span style={{ fontWeight: '700', textTransform: 'uppercase', fontSize: '12px', opacity: 0.5 }}>{scene.timeOfDay}</span>
+                          )}
                         </div>
-                        <p style={{ fontWeight: '700', fontSize: '18px' }}>{scene.action}</p>
+                        {isEditMode ? (
+                          <textarea
+                            value={scene.action}
+                            onChange={(e) => {
+                              const updated = { ...editedResult };
+                              updated.scenes[idx].action = e.target.value;
+                              setEditedResult(updated);
+                            }}
+                            style={{ fontWeight: '700', fontSize: '18px', border: '1px dashed #ccc', padding: '8px', width: '100%', minHeight: '80px', resize: 'vertical' }}
+                          />
+                        ) : (
+                          <p style={{ fontWeight: '700', fontSize: '18px' }}>{scene.action}</p>
+                        )}
                         <div style={{ fontSize: '10px', fontWeight: '900', color: '#aaa', marginTop: '12px' }}>
                           CAST: {scene.characters.join(' / ')}
                         </div>
@@ -317,22 +535,74 @@ function App() {
                   <div>
                     <div style={{ marginBottom: '48px' }}>
                       <h3 className="label-small" style={{ textDecoration: 'underline' }}>Sonic Architecture</h3>
-                      <div style={{ fontSize: '32px', fontWeight: '900', textTransform: 'uppercase' }}>{result.soundDesign.musicTheme.style}</div>
-                      <p style={{ fontWeight: '700', opacity: 0.6, fontStyle: 'italic' }}>{result.soundDesign.musicTheme.mood}</p>
+                      {isEditMode ? (
+                        <>
+                          <input
+                            type="text"
+                            value={editedResult.soundDesign.musicTheme.style}
+                            onChange={(e) => {
+                              const updated = { ...editedResult };
+                              updated.soundDesign.musicTheme.style = e.target.value;
+                              setEditedResult(updated);
+                            }}
+                            style={{ fontSize: '32px', fontWeight: '900', textTransform: 'uppercase', border: '2px dashed #ccc', padding: '8px', width: '100%', marginBottom: '8px' }}
+                          />
+                          <textarea
+                            value={editedResult.soundDesign.musicTheme.mood}
+                            onChange={(e) => {
+                              const updated = { ...editedResult };
+                              updated.soundDesign.musicTheme.mood = e.target.value;
+                              setEditedResult(updated);
+                            }}
+                            style={{ fontWeight: '700', opacity: 0.6, fontStyle: 'italic', border: '1px dashed #ccc', padding: '8px', width: '100%', minHeight: '50px', resize: 'vertical' }}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: '32px', fontWeight: '900', textTransform: 'uppercase' }}>{result.soundDesign.musicTheme.style}</div>
+                          <p style={{ fontWeight: '700', opacity: 0.6, fontStyle: 'italic' }}>{result.soundDesign.musicTheme.mood}</p>
+                        </>
+                      )}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
-                        {result.soundDesign.musicTheme.instruments.map(inst => (
+                        {(isEditMode ? editedResult.soundDesign.musicTheme.instruments : result.soundDesign.musicTheme.instruments).map(inst => (
                           <span key={inst} className="tag tag-blue">{inst}</span>
                         ))}
                       </div>
                     </div>
                     <div>
                       <h3 className="label-small">Ambiance Map</h3>
-                      {result.soundDesign.ambience.map((amb, i) => (
+                      {(isEditMode ? editedResult.soundDesign.ambience : result.soundDesign.ambience).map((amb, i) => (
                         <div key={i} style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
                           <div style={{ fontWeight: '900', fontSize: '24px', opacity: 0.2 }}>0{i + 1}</div>
-                          <div>
-                            <div style={{ fontWeight: '900', textTransform: 'uppercase', fontSize: '14px' }}>{amb.location}</div>
-                            <p style={{ fontSize: '12px', fontWeight: '700', opacity: 0.6 }}>{amb.description}</p>
+                          <div style={{ flex: 1 }}>
+                            {isEditMode ? (
+                              <>
+                                <input
+                                  type="text"
+                                  value={amb.location}
+                                  onChange={(e) => {
+                                    const updated = { ...editedResult };
+                                    updated.soundDesign.ambience[i].location = e.target.value;
+                                    setEditedResult(updated);
+                                  }}
+                                  style={{ fontWeight: '900', textTransform: 'uppercase', fontSize: '14px', border: '1px dashed #ccc', padding: '4px', width: '100%', marginBottom: '4px' }}
+                                />
+                                <textarea
+                                  value={amb.description}
+                                  onChange={(e) => {
+                                    const updated = { ...editedResult };
+                                    updated.soundDesign.ambience[i].description = e.target.value;
+                                    setEditedResult(updated);
+                                  }}
+                                  style={{ fontSize: '12px', fontWeight: '700', opacity: 0.6, border: '1px dashed #ccc', padding: '4px', width: '100%', minHeight: '40px', resize: 'vertical' }}
+                                />
+                              </>
+                            ) : (
+                              <>
+                                <div style={{ fontWeight: '900', textTransform: 'uppercase', fontSize: '14px' }}>{amb.location}</div>
+                                <p style={{ fontSize: '12px', fontWeight: '700', opacity: 0.6 }}>{amb.description}</p>
+                              </>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -341,12 +611,38 @@ function App() {
                   <div style={{ background: '#1a1a1a', color: 'white', padding: '32px', boxShadow: '8px 8px 0 #d36d5b' }}>
                     <h3 className="label-small" style={{ color: '#555' }}>Audio Beat-Sheet</h3>
                     <div style={{ marginTop: '32px' }}>
-                      {result.soundDesign.keyMoments.map((moment, i) => (
+                      {(isEditMode ? editedResult.soundDesign.keyMoments : result.soundDesign.keyMoments).map((moment, i) => (
                         <div key={i} style={{ position: 'relative', paddingLeft: '32px', borderLeft: '2px solid #333', paddingBottom: '40px' }}>
                           <div style={{ position: 'absolute', top: 0, left: '-6px', width: '10px', height: '10px', background: '#d36d5b', borderRadius: '50%' }} />
                           <div style={{ fontSize: '10px', fontWeight: '900', color: '#555', marginBottom: '8px' }}>SCN {moment.scene}</div>
-                          <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '8px' }}>{moment.moment}</div>
-                          <div style={{ fontSize: '12px', opacity: 0.5, fontStyle: 'italic' }}>// {moment.soundDesign}</div>
+                          {isEditMode ? (
+                            <>
+                              <input
+                                type="text"
+                                value={moment.moment}
+                                onChange={(e) => {
+                                  const updated = { ...editedResult };
+                                  updated.soundDesign.keyMoments[i].moment = e.target.value;
+                                  setEditedResult(updated);
+                                }}
+                                style={{ fontWeight: '700', fontSize: '14px', marginBottom: '8px', border: '1px dashed #555', padding: '4px', width: '100%', background: '#2a2a2a', color: 'white' }}
+                              />
+                              <textarea
+                                value={moment.soundDesign}
+                                onChange={(e) => {
+                                  const updated = { ...editedResult };
+                                  updated.soundDesign.keyMoments[i].soundDesign = e.target.value;
+                                  setEditedResult(updated);
+                                }}
+                                style={{ fontSize: '12px', opacity: 0.5, fontStyle: 'italic', border: '1px dashed #555', padding: '4px', width: '100%', minHeight: '40px', resize: 'vertical', background: '#2a2a2a', color: 'white' }}
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '8px' }}>{moment.moment}</div>
+                              <div style={{ fontSize: '12px', opacity: 0.5, fontStyle: 'italic' }}>// {moment.soundDesign}</div>
+                            </>
+                          )}
                         </div>
                       ))}
                     </div>

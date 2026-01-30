@@ -124,12 +124,23 @@ def export_pdf():
         filename = f"Scriptoria_{data['screenplay'].get('title', 'Script')}.pdf"
         filename = "".join(x for x in filename if x.isalnum() or x in "._- ")
         
-        return send_file(
+        # Get the PDF size for Content-Length header
+        pdf_buffer.seek(0, 2)  # Seek to end
+        pdf_size = pdf_buffer.tell()
+        pdf_buffer.seek(0)  # Seek back to start
+        
+        response = send_file(
             pdf_buffer,
             as_attachment=True,
             download_name=filename,
             mimetype='application/pdf'
         )
+        
+        # Add explicit headers to prevent network errors
+        response.headers['Content-Length'] = str(pdf_size)
+        response.headers['Cache-Control'] = 'no-cache'
+        
+        return response
     except Exception as e:
         print(f"❌ PDF Export error: {str(e)}")
         return jsonify({"error": str(e)}), 500
