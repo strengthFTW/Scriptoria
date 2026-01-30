@@ -19,6 +19,10 @@ def generate_characters(screenplay_data: dict) -> list:
     """
     client = get_ai_client()
     
+    # Safety check: if screenplay_data is a string, we can't parse it
+    if isinstance(screenplay_data, str):
+        raise ValueError("Character generator received a string instead of screenplay data. Please try regenerating.")
+    
     title = screenplay_data.get('title', 'Untitled')
     logline = screenplay_data.get('logline', '')
     genre = screenplay_data.get('genre', 'Drama')

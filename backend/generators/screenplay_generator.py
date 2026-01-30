@@ -81,7 +81,13 @@ Return ONLY the JSON object, no additional text."""
 
     try:
         response = client.generate(prompt, json_mode=True)
-        return safe_parse_json(response)
+        result = safe_parse_json(response)
+        
+        # Ensure result is a dictionary, not a string
+        if not isinstance(result, dict):
+            raise ValueError(f"AI returned {type(result).__name__} instead of dictionary object")
+            
+        return result
         
     except Exception as e:
         print(f"❌ Screenplay generation error: {e}")
