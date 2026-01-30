@@ -1,0 +1,357 @@
+@import url('https://fonts.googleapis.com/css2?family=Righteous&family=Fredoka+One&family=Poppins:wght@300;400;600&display=swap');
+
+:root {
+  /* Indie Light Color Palette */
+  --cream: #FFF8E7;
+  --peach: #FFB5A7;
+  --coral: #FF6B6B;
+  --mint: #B4F8C8;
+  --sky-blue: #A0E7E5;
+  --lavender: #D4A5FF;
+  --lemon: #FFF59D;
+  --rose: #F8B4D9;
+  
+  /* Retro Colors */
+  --retro-orange: #FF9F1C;
+  --retro-teal: #2EC4B6;
+  --retro-purple: #9D4EDD;
+  --retro-pink: #FF006E;
+  
+  /* Neutrals */
+  --white: #FFFFFF;
+  --light-gray: #F5F5F5;
+  --gray: #CCCCCC;
+  --dark-text: #2D3142;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, var(--cream) 0%, var(--lemon) 50%, var(--mint) 100%);
+  min-height: 100vh;
+  color: var(--dark-text);
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: fadeInDown 0.8s ease-out;
+}
+
+.title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 4rem;
+  background: linear-gradient(45deg, var(--retro-orange), var(--retro-pink), var(--retro-purple), var(--retro-teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+  animation: colorShift 3s ease infinite;
+  text-shadow: 3px 3px 0px rgba(0,0,0,0.1);
+}
+
+.subtitle {
+  font-family: 'Righteous', cursive;
+  font-size: 1.2rem;
+  color: var(--retro-purple);
+  letter-spacing: 2px;
+}
+
+/* Form */
+.form {
+  background: var(--white);
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.8s ease-out;
+  border: 3px solid var(--peach);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  font-family: 'Righteous', cursive;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: var(--retro-purple);
+}
+
+.textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 3px solid var(--mint);
+  border-radius: 12px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  resize: vertical;
+  transition: all 0.3s ease;
+  background: var(--light-gray);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--retro-teal);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(46, 196, 182, 0.2);
+}
+
+.char-count {
+  display: block;
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--gray);
+  margin-top: 0.25rem;
+}
+
+.select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 3px solid var(--sky-blue);
+  border-radius: 12px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  background: var(--light-gray);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--retro-purple);
+  background: var(--white);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 1.2rem;
+  background: linear-gradient(135deg, var(--retro-orange), var(--retro-pink));
+  color: var(--white);
+  border: none;
+  border-radius: 15px;
+  font-family: 'Righteous', cursive;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(255, 159, 28, 0.4);
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 159, 28, 0.6);
+}
+
+.submit-btn:active {
+  transform: translateY(-1px);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error Box */
+.error-box {
+  background: linear-gradient(135deg, var(--coral), var(--rose));
+  color: var(--white);
+  padding: 1.5rem;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  border: 3px solid var(--retro-pink);
+  animation: shake 0.5s ease;
+}
+
+.error-hint {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Results */
+.results {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.results-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2.5rem;
+  color: var(--retro-purple);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.result-section {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
+  border: 3px solid var(--lavender);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.section-title {
+  font-family: 'Righteous', cursive;
+  font-size: 1.5rem;
+  color: var(--retro-teal);
+  margin-bottom: 1rem;
+  border-bottom: 3px solid var(--mint);
+  padding-bottom: 0.5rem;
+}
+
+.screenplay-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: var(--retro-orange);
+}
+
+/* Act Structure */
+.act-box {
+  background: linear-gradient(135deg, var(--cream), var(--lemon));
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border-left: 5px solid var(--retro-purple);
+}
+
+.act-title {
+  font-family: 'Righteous', cursive;
+  color: var(--retro-purple);
+  margin-bottom: 0.5rem;
+}
+
+.act-description {
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+.act-events {
+  list-style: none;
+  padding-left: 1rem;
+}
+
+.act-events li {
+  padding: 0.5rem 0;
+  border-left: 3px solid var(--retro-teal);
+  padding-left: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Characters */
+.characters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.character-card {
+  background: linear-gradient(135deg, var(--mint), var(--sky-blue));
+  padding: 1.5rem;
+  border-radius: 15px;
+  border: 3px solid var(--retro-teal);
+  transition: transform 0.3s ease;
+}
+
+.character-card:hover {
+  transform: translateY(-5px);
+}
+
+.char-name {
+  font-family: 'Fredoka One', cursive;
+  color: var(--retro-purple);
+  margin-bottom: 0.5rem;
+}
+
+.char-role {
+  font-weight: 600;
+  color: var(--retro-orange);
+  margin-bottom: 0.5rem;
+}
+
+.char-arc {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.char-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.trait-tag {
+  background: var(--white);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: var(--retro-pink);
+  font-weight: 600;
+  border: 2px solid var(--retro-pink);
+}
+
+/* Animations */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes colorShift {
+  0%, 100% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(20deg);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .title {
+    font-size: 2.5rem;
+  }
+  
+  .form {
+    padding: 1.5rem;
+  }
+  
+  .characters-grid {
+    grid-template-columns: 1fr;
+  }
+}
