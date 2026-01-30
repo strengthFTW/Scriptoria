@@ -80,13 +80,11 @@ Generate a screenplay outline in the following JSON format. Be creative and deta
 Return ONLY the JSON object, no additional text."""
 
     try:
-        response = client.generate(prompt)
+        response = client.generate(prompt, json_mode=True)
         return safe_parse_json(response)
         
-    except json.JSONDecodeError as e:
-        print(f"❌ JSON parsing error: {e}")
-        print(f"Response: {response[:500]}...")
-        raise Exception("Failed to parse AI response as JSON")
     except Exception as e:
-        print(f"❌ Generation error: {e}")
-        raise
+        print(f"❌ Screenplay generation error: {e}")
+        if 'response' in locals() and response:
+            print(f"Full response for debugging: {response}")
+        raise Exception(f"Failed to generate screenplay: {str(e)}")
