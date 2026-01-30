@@ -63,6 +63,20 @@ Create a complete scene breakdown that covers the full story arc. Return ONLY th
         response = client.generate(prompt, json_mode=True)
         result = safe_parse_json(response)
         
+        if isinstance(result, dict):
+            # If AI returned a dict, try to find the list inside
+            print("⚠️ AI returned dict, attempting to extract list...")
+            for key in ['scenes', 'breakdown', 'data', 'result']:
+                if key in result and isinstance(result[key], list):
+                    result = result[key]
+                    break
+            else:
+                # If no specific key found, take the first list value found
+                for value in result.values():
+                    if isinstance(value, list):
+                        result = value
+                        break
+        
         if not isinstance(result, list):
             raise ValueError(f"AI returned {type(result).__name__} instead of a list for scenes.")
             
