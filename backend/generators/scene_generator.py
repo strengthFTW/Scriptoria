@@ -20,6 +20,12 @@ def generate_scenes(screenplay_data: dict, characters: list) -> list:
     """
     client = get_ai_client()
     
+    # Type Guard: Ensure screenplay_data and characters are valid
+    if not isinstance(screenplay_data, dict):
+        raise ValueError("Scene generator received invalid screenplay data. Please try regenerating.")
+    if not isinstance(characters, list):
+        raise ValueError("Scene generator received invalid character data. Please try regenerating.")
+    
     title = screenplay_data.get('title', 'Untitled')
     logline = screenplay_data.get('logline', '')
     genre = screenplay_data.get('genre', 'Drama')
@@ -55,7 +61,12 @@ Create a complete scene breakdown that covers the full story arc. Return ONLY th
 
     try:
         response = client.generate(prompt, json_mode=True)
-        return safe_parse_json(response)
+        result = safe_parse_json(response)
+        
+        if not isinstance(result, list):
+            raise ValueError(f"AI returned {type(result).__name__} instead of a list for scenes.")
+            
+        return result
         
     except Exception as e:
         print(f"❌ Scene generation error: {e}")

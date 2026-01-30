@@ -20,6 +20,12 @@ def generate_sound_design(screenplay_data: dict, scenes: list) -> dict:
     """
     client = get_ai_client()
     
+    # Type Guard: Ensure inputs are valid
+    if not isinstance(screenplay_data, dict):
+        raise ValueError("Sound generator received invalid screenplay data.")
+    if not isinstance(scenes, list):
+        raise ValueError("Sound generator received invalid scene data.")
+    
     title = screenplay_data.get('title', 'Untitled')
     genre = screenplay_data.get('genre', 'Drama')
     
@@ -72,7 +78,12 @@ Create detailed, production-ready sound design suggestions. Return ONLY the JSON
 
     try:
         response = client.generate(prompt, json_mode=True)
-        return safe_parse_json(response)
+        result = safe_parse_json(response)
+        
+        if not isinstance(result, dict):
+            raise ValueError(f"AI returned {type(result).__name__} instead of a dictionary for sound design.")
+            
+        return result
         
     except Exception as e:
         print(f"❌ Sound design generation error: {e}")

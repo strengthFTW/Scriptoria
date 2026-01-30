@@ -56,7 +56,12 @@ Create 3-5 diverse, three-dimensional characters that fit the story. Return ONLY
 
     try:
         response = client.generate(prompt, json_mode=True)
-        return safe_parse_json(response)
+        result = safe_parse_json(response)
+        
+        if not isinstance(result, list):
+            raise ValueError(f"AI returned {type(result).__name__} instead of a list for characters.")
+            
+        return result
         
     except Exception as e:
         print(f"❌ Character generation error: {e}")
