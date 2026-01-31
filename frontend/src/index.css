@@ -175,6 +175,8 @@ textarea.lined-paper {
 
 /* Upload Box with depth */
 .upload-box {
+  position: relative;
+  overflow: hidden;
   border: 1px dashed #888;
   border-spacing: 4px;
   border-radius: 12px;
