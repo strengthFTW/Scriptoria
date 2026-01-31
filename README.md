@@ -229,13 +229,7 @@ This is a hackathon MVP. Contributions welcome!
 4. Push to the branch
 5. Open a Pull Request
 
-## 🙏 Acknowledgments
 
-- Built with [Groq](https://groq.com/) - Lightning-fast AI inference
-- Inspired by the need for accessible film pre-production tools
-- Created during a 24-hour hackathon challenge
-
----
 
 **Made with ❤️ for filmmakers and storytellers**
 
