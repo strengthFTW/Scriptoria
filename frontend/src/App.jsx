@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { supabase } from './supabaseClient';
+import { useAuth } from './context/AuthContext';
+import Sidebar from './components/Sidebar';
 import './index.css';
 
-const API_BASE = 'https://scriptoria-ua29.onrender.com';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://scriptoria-ua29.onrender.com';
 
-function App() {
+function App({ initialStory, onStorySaved }) {
+  const { user } = useAuth();
   const [mode, setMode] = useState('generate'); // 'generate' or 'analyze'
   const [storyIdea, setStoryIdea] = useState('');
   const [scriptText, setScriptText] = useState('');
@@ -20,7 +24,42 @@ function App() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedResult, setEditedResult] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
+  const [currentStoryId, setCurrentStoryId] = useState(null);
   const timerRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Sync with initialStory when it changes (from Sidebar)
+  useEffect(() => {
+    if (initialStory) {
+      setStoryIdea(initialStory.story_idea || '');
+      setSelectedGenres(initialStory.genre ? [initialStory.genre] : []);
+
+      // Parse screenplay and characters if they are strings
+      let screenplay = initialStory.screenplay;
+      let characters = initialStory.characters;
+
+      try {
+        if (typeof screenplay === 'string') screenplay = JSON.parse(screenplay);
+        if (typeof characters === 'string') characters = JSON.parse(characters);
+      } catch (e) {
+        console.error("Failed to parse loaded story content", e);
+      }
+
+      setResult({
+        screenplay,
+        characters,
+        // Optional: you could load more here if needed
+      });
+      setActiveTab('Outline');
+      setMode('generate');
+    } else {
+      // Clear if no story is selected
+      setResult(null);
+      setStoryIdea('');
+      setSelectedGenres([]);
+      setScriptText('');
+    }
+  }, [initialStory]);
 
   useEffect(() => {
     if (loading) {
@@ -188,6 +227,7 @@ function App() {
           <p>AI-Generated Pre-Production Blueprint</p>
         </div>
       </header>
+      <div className="header-divider"></div>
 
       <main>
         {!result ? (
@@ -255,30 +295,33 @@ function App() {
             {/* Action Grid */}
             <div className="action-grid">
               {/* Upload Box */}
-              <label className="upload-box">
-                <input type="file" className="hidden" style={{ display: 'none' }} accept=".pdf,.docx,.doc" onChange={handleFileUpload} />
+              <div className="upload-box" onClick={() => fileInputRef.current.click()}>
                 <div className="upload-icon">
-                  {isUploading ? '⌛' : uploadedFileName ? '✓' : '☁'}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
                 </div>
                 <div className="upload-text">
+                  <b>{uploadedFileName || "Upload Script"}</b>
                   {uploadedFileName ? (
-                    <>
-                      <b>{uploadedFileName}</b>
-                      <span style={{ color: '#4CAF50' }}>Uploaded Successfully</span>
-                    </>
+                    <span style={{ color: '#4CAF50' }}>Uploaded Successfully</span>
                   ) : (
-                    <>
-                      <b>Upload Script</b>
-                      <span>.PDF, .FDX, .TXT</span>
-                    </>
+                    <span>.PDF, .FDX, .TXT</span>
                   )}
                 </div>
-                {uploadProgress > 0 && (
-                  <div style={{ width: '100%', height: '2px', background: '#eee', marginTop: '10px' }}>
-                    <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'black' }} />
-                  </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  accept=".pdf,.docx,.txt"
+                />
+                {isUploading && (
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, height: '4px', background: 'var(--retro-red)', width: `${uploadProgress}%`, transition: 'width 0.3s ease' }} />
                 )}
-              </label>
+              </div>
 
               {/* Settings Box */}
               <div className="settings-box">
@@ -721,25 +764,134 @@ function App() {
               )}
             </div>
 
-            {/* Back Button */}
-            <div style={{ marginTop: '40px', textAlign: 'center' }}>
+            {/* Save & Discard Buttons - Right aligned below content */}
+            <div style={{
+              marginTop: '40px',
+              marginBottom: '40px',
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'flex-end',
+              paddingRight: '60px'
+            }}>
               <button
-                onClick={() => setResult(null)}
-                style={{ background: 'none', border: 'none', borderBottom: '2px solid black', paddingBottom: '4px', fontWeight: '900', fontSize: '11px', textTransform: 'uppercase', cursor: 'pointer' }}
+                onClick={async () => {
+                  try {
+                    const title = result?.screenplay?.title || 'Untitled Story';
+                    const genre = selectedGenres[0] || null;
+
+                    const storyData = {
+                      user_id: user.id,
+                      title,
+                      genre,
+                      story_idea: storyIdea,
+                      screenplay: result.screenplay,
+                      characters: result.characters,
+                      updated_at: new Date().toISOString()
+                    };
+
+                    if (currentStoryId) {
+                      storyData.id = currentStoryId;
+                    }
+
+                    const { error } = await supabase
+                      .from('stories')
+                      .upsert([storyData]);
+
+                    if (error) throw error;
+
+                    // Reset WITHOUT page reload
+                    setResult(null);
+                    setEditedResult(null);
+                    setStoryIdea('');
+                    setScriptText('');
+                    setSelectedGenres([]);
+                    setUploadedFileName('');
+                    setActiveTab('Outline');
+                    setCurrentStoryId(null);
+
+                    // Refresh sidebar via parent callback
+                    if (onStorySaved) onStorySaved();
+                  } catch (err) {
+                    console.error('Save failed:', err);
+                    alert(`❌ Failed to save story: ${err.message}`);
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translate(-2px, -2px)';
+                  e.target.style.boxShadow = '7px 7px 0 rgba(0,0,0,0.9)';
+                  e.target.style.background = '#6aa66a';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translate(0, 0)';
+                  e.target.style.boxShadow = '5px 5px 0 rgba(0,0,0,0.8)';
+                  e.target.style.background = '#5a8a5a';
+                }}
+                style={{
+                  background: '#5a8a5a',
+                  color: '#fff',
+                  border: '3px solid #000',
+                  padding: '14px 32px',
+                  fontWeight: '900',
+                  fontSize: '13px',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  boxShadow: '5px 5px 0 rgba(0,0,0,0.8)',
+                  fontFamily: "'Courier New', monospace",
+                  transition: 'all 0.15s ease'
+                }}
               >
-                Reset Workshop
+                SAVE
+              </button>
+
+              <button
+                onClick={() => {
+                  if (confirm('Discard this story without saving?')) {
+                    setResult(null);
+                    setEditedResult(null);
+                    setStoryIdea('');
+                    setScriptText('');
+                    setSelectedGenres([]);
+                    setCurrentStoryId(null);
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translate(-2px, -2px)';
+                  e.target.style.boxShadow = '7px 7px 0 rgba(0,0,0,0.9)';
+                  e.target.style.background = '#d55';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translate(0, 0)';
+                  e.target.style.boxShadow = '5px 5px 0 rgba(0,0,0,0.8)';
+                  e.target.style.background = '#c44';
+                }}
+                style={{
+                  background: '#c44',
+                  color: '#fff',
+                  border: '3px solid #000',
+                  padding: '14px 32px',
+                  fontWeight: '900',
+                  fontSize: '13px',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  boxShadow: '5px 5px 0 rgba(0,0,0,0.8)',
+                  fontFamily: "'Courier New', monospace",
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                DISCARD
               </button>
             </div>
           </div>
-        )}
-      </main>
+        )
+        }
+      </main >
 
       <footer>
         <span>Scriptoria Process Node 2026</span>
         <span>Transmission: Secured</span>
         <span>Groq: 70B Engine</span>
       </footer>
-    </div>
+    </div >
   );
 }
 

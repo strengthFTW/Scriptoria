@@ -1,0 +1,82 @@
+/* Dashboard Header Styling */
+.dashboard-wrapper {
+    min-height: 100vh;
+}
+
+.dashboard-header {
+    background-color: #3a3d4a;
+    color: white;
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 0;
+}
+
+.dashboard-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 20px 32px;
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+.dashboard-logo span {
+    color: #d9735f;
+}
+
+.dashboard-user {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 32px;
+}
+
+.user-email {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.logout-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 16px;
+    background: #d9735f;
+    color: white;
+    border: 2px solid white;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.logout-btn:hover {
+    background: #c5463a;
+    transform: translateY(-1px);
+}
+
+.logout-btn:active {
+    transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .dashboard-logo,
+    .dashboard-user {
+        padding: 0;
+    }
+
+    .user-email {
+        font-size: 11px;
+    }
+}
