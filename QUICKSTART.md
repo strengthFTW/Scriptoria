@@ -1,122 +1,96 @@
-# Scriptoria - Quick Start Guide
+# Scriptoria - Quick Start Guide ⚡
 
-## 🆕 AI Integration Setup (Required)
+Follow these steps to get your local development environment running in under 5 minutes.
 
-### Get Gemini API Key
-1. Visit https://aistudio.google.com/app/apikey
-2. Sign in and create API key (free tier: 15 req/min)
-3. Copy the key
-
-### Configure Backend
-Create `backend/.env` file:
-```
-GEMINI_API_KEY=your_actual_api_key_here
-FLASK_ENV=development
-```
-
-### Install AI Dependencies
-```bash
-cd backend
-venv\Scripts\activate
-pip install google-generativeai==0.8.0
-```
-
-## Quick Commands
-
-### Start Backend (Terminal 1)
-```bash
-cd backend
-venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
-```
-
-Backend runs on: http://localhost:5000
-
-### Start Frontend (Terminal 2)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend runs on: http://localhost:5173
-
-### First Time Setup
-
-**Backend:**
-```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate  # Windows
-pip install -r requirements.txt
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm install
-```
-
-## Testing the App
-
-1. Open http://localhost:5173 in your browser
-2. Enter a story idea (20-500 characters)
-3. Select a genre
-4. Click "Generate Screenplay"
-5. View the mock results showing screenplay structure and characters
-
-## Project Structure
-
-```
-Scriptoria/
-├── backend/
-│   ├── app.py              # Flask server with /generate endpoint
-│   ├── requirements.txt    # Python dependencies
-│   └── .env.example       # Environment template
-│
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx        # Main React component
-│   │   └── App.css        # Indie light retro styling
-│   └── package.json       # Node dependencies
-│
-└── README.md              # Project documentation
-```
-
-## Current Features (MVP)
-
-✅ Flask backend with mock API  
-✅ React frontend with beautiful UI  
-✅ Indie light theme with retro fonts  
-✅ Form validation and error handling  
-✅ Loading states  
-✅ Mock screenplay generation  
-✅ Character profiles  
-
-## Next Steps for Full Implementation
-
-1. **Add AI Integration**: Integrate Google Gemini or OpenAI API
-2. **Scene Generation**: Add scene breakdown generator
-3. **Sound Design**: Add sound design suggestions
-4. **Save Projects**: Implement JSON storage
-5. **Export Features**: Add PDF/JSON export
-
-## Troubleshooting
-
-**Backend won't start:**
-- Make sure port 5000 is available
-- Check that Flask is installed: `pip list | findstr Flask`
-
-**Frontend won't connect:**
-- Verify backend is running at http://localhost:5000
-- Check browser console for CORS errors
-- Try clearing browser cache
-
-**CORS Errors:**
-- Backend already has `flask-cors` enabled
-- Make sure both servers are running
+## 1. Prerequisites
+- **Node.js 18+** & **npm**
+- **Python 3.10+**
+- **Groq API Key**: Get it for free at [console.groq.com](https://console.groq.com/)
+- **Supabase Project**: Create a free project at [supabase.com](https://supabase.com/)
 
 ---
 
-**Ready to generate your first screenplay!** 🎬✨
+## 2. Backend Setup (Flask)
+The backend handles the AI generation and PDF exports.
+
+```bash
+cd backend
+python -m venv venv
+# Activate venv:
+# Windows: venv\Scripts\activate
+# Mac/Linux: source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### Configure Environment
+Create a `.env` file in the `backend/` directory:
+```env
+GROQ_API_KEY=your_gsk_api_key_here
+```
+
+### Start Server
+```bash
+python app.py
+```
+> Server will run at: `http://localhost:5000`
+
+---
+
+## 3. Frontend Setup (React + Vite)
+The frontend provides the "Indie Editorial" workspace.
+
+```bash
+cd frontend
+npm install
+```
+
+### Configure Environment
+Create a `.env` file in the `frontend/` directory:
+```env
+VITE_API_URL=http://localhost:5000
+VITE_SUPABASE_URL=your_project_url_from_supabase
+VITE_SUPABASE_ANON_KEY=your_anon_public_key_from_supabase
+```
+
+### Start Development Server
+```bash
+npm run dev
+```
+> Workspace will be available at: `http://localhost:5173`
+
+---
+
+## 4. Database Setup (Supabase)
+To enable the **Save/Load** functionality, run the following SQL in your Supabase SQL Editor:
+
+```sql
+create table stories (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text not null,
+  genre text,
+  story_idea text,
+  screenplay jsonb not null,
+  characters jsonb not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable Row Level Security
+alter table stories enable row level security;
+
+-- Create Policy: Users can only see their own stories
+create policy "Users can manage their own stories"
+  on stories for all
+  using (auth.uid() = user_id);
+```
+
+---
+
+## 5. Troubleshooting
+- **CORS Errors**: Ensure the backend's `CORS` origins in `app.py` allow your frontend URL.
+- **Save Failed**: Check that your Supabase URL and Key are correct in `frontend/.env`.
+- **AI Typos**: Scriptoria uses Llama-3.3-70B on Groq; ensure your API key has "versatile" model access.
+
+🎬 **Happy Writing!**

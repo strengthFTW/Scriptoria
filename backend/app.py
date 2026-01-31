@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from dotenv import load_dotenv
 import os
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Load environment variables
 load_dotenv()
@@ -17,13 +18,28 @@ from generators.script_analyzer import analyze_script
 from utils.pdf_generator import generate_pdf
 from utils.text_extractor import extract_text_from_pdf, extract_text_from_docx, clean_text
 
+# Import auth and models (User/Story models can stay for backend DB access if needed)
+from models import db, bcrypt
+
 app = Flask(__name__)
 
-# Enhanced CORS configuration for production
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///scriptoria.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# JWT configuration
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
+
+# Initialize extensions
+db.init_app(app)
+bcrypt.init_app(app)
+
+# Enhanced CORS configuration
 CORS(app, resources={
     r"/*": {
         "origins": "*",
-        "methods": ["GET", "POST", "OPTIONS"],
+        "methods": ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "expose_headers": ["Content-Type"],
         "supports_credentials": False
@@ -47,6 +63,7 @@ def home():
     })
 
 @app.route('/generate', methods=['POST'])
+# @jwt_required()  # Temporarily disabled for testing
 def generate():
     """
     Generate screenplay and characters using Gemini AI
@@ -137,6 +154,7 @@ def generate():
         }), 500
 
 @app.route('/analyze_script', methods=['POST'])
+# @jwt_required()  # Temporarily disabled for testing
 def analyze_script_endpoint():
     """
     Analyze an existing script and generate pre-production materials
@@ -315,11 +333,21 @@ if __name__ == '__main__':
     print("📡 Server running at http://localhost:5000")
     print("✅ CORS enabled for frontend requests")
     
+    # Create database tables
+    with app.app_context():
+        db.create_all()
+        print("✅ Database initialized")
+    
     # Check API key
     if os.getenv('GROQ_API_KEY'):
         print("🤖 Groq API key detected")
     else:
         print("⚠️  WARNING: GROQ_API_KEY not found in .env file")
         print("💡 Create a .env file with your API key to enable AI generation")
+    
+    # Check JWT secret
+    if not os.getenv('JWT_SECRET_KEY'):
+        print("⚠️  WARNING: Using default JWT_SECRET_KEY (insecure for production)")
+        print("💡 Add JWT_SECRET_KEY to .env file for production")
     
     app.run(debug=True, port=5000)

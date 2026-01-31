@@ -63,22 +63,34 @@ Create a complete scene breakdown that covers the full story arc. Return ONLY th
         response = client.generate(prompt, json_mode=True)
         result = safe_parse_json(response)
         
+        # Robust list extraction if AI returns an object instead of a direct array
         if isinstance(result, dict):
-            # If AI returned a dict, try to find the list inside
-            print("⚠️ AI returned dict, attempting to extract list...")
-            for key in ['scenes', 'breakdown', 'data', 'result']:
+            print(f"⚠️ AI returned dict with keys: {list(result.keys())}, attempting to extract list...")
+            
+            # 1. Broad list of common keys AI might use for scenes
+            common_keys = [
+                'scenes', 'breakdown', 'scene_breakdown', 'sceneBreakdown',
+                'scene_list', 'sceneList', 'data', 'result', 'list', 'items'
+            ]
+            
+            for key in common_keys:
                 if key in result and isinstance(result[key], list):
+                    print(f"✅ Found scene list under key: '{key}'")
                     result = result[key]
                     break
             else:
-                # If no specific key found, take the first list value found
-                for value in result.values():
-                    if isinstance(value, list):
-                        result = value
-                        break
+                # 2. If no common key found, search for ONLY list found in top-level values
+                lists_found = [v for v in result.values() if isinstance(v, list)]
+                if len(lists_found) == 1:
+                    print("✅ Found exactly one list in response, assuming it's the scene list")
+                    result = lists_found[0]
+                elif len(lists_found) > 1:
+                    # Pick the largest list if multiple lists found
+                    print(f"✅ Found {len(lists_found)} lists, picking the largest one")
+                    result = max(lists_found, key=len)
         
         if not isinstance(result, list):
-            raise ValueError(f"AI returned {type(result).__name__} instead of a list for scenes.")
+            raise ValueError(f"AI returned {type(result).__name__} instead of a list. Keys: {list(result.keys()) if isinstance(result, dict) else 'N/A'}")
             
         return result
         
