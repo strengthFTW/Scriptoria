@@ -13,6 +13,7 @@ from generators.screenplay_generator import generate_screenplay
 from generators.character_generator import generate_characters
 from generators.scene_generator import generate_scenes
 from generators.sound_design_generator import generate_sound_design
+from generators.script_analyzer import analyze_script
 from utils.pdf_generator import generate_pdf
 from utils.text_extractor import extract_text_from_pdf, extract_text_from_docx, clean_text
 
@@ -39,6 +40,7 @@ def home():
         "endpoints": {
             "/health": "Health check",
             "/generate": "Generate screenplay (POST)",
+            "/analyze_script": "Analyze existing script (POST)",
             "/upload": "Upload script file (POST)",
             "/export_pdf": "Export to PDF (POST)"
         }
@@ -131,6 +133,97 @@ def generate():
         return jsonify({
             "success": False,
             "error": "Failed to generate screenplay. Please try again.",
+            "details": error_msg
+        }), 500
+
+@app.route('/analyze_script', methods=['POST'])
+def analyze_script_endpoint():
+    """
+    Analyze an existing script and generate pre-production materials
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                "success": False,
+                "error": "No data provided"
+            }), 400
+        
+        script_text = data.get('scriptText', '').strip()
+        genre = data.get('genre', 'Drama')
+        
+        # Validation
+        if not script_text:
+            return jsonify({
+                "success": False,
+                "error": "Script text is required"
+            }), 400
+        
+        if len(script_text) < 100:
+            return jsonify({
+                "success": False,
+                "error": "Script text is too short (minimum 100 characters)"
+            }), 400
+        
+        if len(script_text) > 100000:
+            return jsonify({
+                "success": False,
+                "error": "Script text is too long (maximum 100,000 characters)"
+            }), 400
+        
+        print(f"🎬 Analyzing existing script...")
+        print(f"📝 Genre: {genre}")
+        print(f"📄 Script length: {len(script_text)} characters")
+        
+        # Analyze script using AI
+        print("⏳ Analyzing script structure...")
+        screenplay_data = analyze_script(script_text, genre)
+        print("✅ Script analyzed!")
+        
+        # Generate characters using AI
+        print("⏳ Generating character profiles...")
+        characters = generate_characters(screenplay_data)
+        print("✅ Characters generated!")
+        
+        # Generate scenes using AI
+        print("⏳ Generating scene breakdown...")
+        scenes = generate_scenes(screenplay_data, characters)
+        print("✅ Scenes generated!")
+        
+        # Generate sound design using AI
+        print("⏳ Generating sound design...")
+        sound_design = generate_sound_design(screenplay_data, scenes)
+        print("✅ Sound design generated!")
+        
+        response = {
+            "success": True,
+            "screenplay": screenplay_data,
+            "characters": characters,
+            "scenes": scenes,
+            "soundDesign": sound_design,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return jsonify(response)
+    
+    except ValueError as e:
+        # API key or configuration errors
+        error_msg = str(e)
+        print(f"❌ Configuration error: {error_msg}")
+        return jsonify({
+            "success": False,
+            "error": "API configuration error. Please check GROQ_API_KEY in .env file",
+            "details": error_msg
+        }), 500
+    
+    except Exception as e:
+        # General errors
+        error_msg = str(e)
+        print(f"❌ Script analysis error: {error_msg}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to analyze script. Please try again.",
             "details": error_msg
         }), 500
 

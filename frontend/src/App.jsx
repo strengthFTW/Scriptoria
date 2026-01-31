@@ -5,7 +5,9 @@ import './index.css';
 const API_BASE = 'https://scriptoria-ua29.onrender.com';
 
 function App() {
+  const [mode, setMode] = useState('generate'); // 'generate' or 'analyze'
   const [storyIdea, setStoryIdea] = useState('');
+  const [scriptText, setScriptText] = useState('');
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -56,7 +58,11 @@ function App() {
       });
 
       if (response.data.success) {
-        setStoryIdea(response.data.extracted_text);
+        if (mode === 'analyze') {
+          setScriptText(response.data.extracted_text);
+        } else {
+          setStoryIdea(response.data.extracted_text);
+        }
         setUploadedFileName(file.name);
         alert(`Successfully extracted ${response.data.full_length} characters from ${file.name}`);
       }
@@ -82,6 +88,30 @@ function App() {
     try {
       const response = await axios.post(`${API_BASE}/generate`, {
         storyIdea,
+        genre: selectedGenres[0] || 'Drama'
+      });
+      setResult(response.data);
+      setActiveTab('Outline');
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.details || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnalyzeScript = async (e) => {
+    e.preventDefault();
+    if (loading || scriptText.length < 100) return;
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setRuntime(0);
+
+    try {
+      const response = await axios.post(`${API_BASE}/analyze_script`, {
+        scriptText,
         genre: selectedGenres[0] || 'Drama'
       });
       setResult(response.data);
@@ -166,6 +196,34 @@ function App() {
       <main>
         {!result ? (
           <div className="animate-fade-in">
+            {/* Mode Toggle */}
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', justifyContent: 'center' }}>
+              <button
+                onClick={() => { setMode('generate'); setError(null); }}
+                className={mode === 'generate' ? 'btn-export' : 'btn-export'}
+                style={{
+                  background: mode === 'generate' ? 'var(--retro-teal)' : '#f0f0f0',
+                  color: mode === 'generate' ? 'white' : 'black',
+                  fontWeight: '900',
+                  fontSize: '12px'
+                }}
+              >
+                📝 Generate from Idea
+              </button>
+              <button
+                onClick={() => { setMode('analyze'); setError(null); }}
+                className={mode === 'analyze' ? 'btn-export' : 'btn-export'}
+                style={{
+                  background: mode === 'analyze' ? 'var(--retro-purple)' : '#f0f0f0',
+                  color: mode === 'analyze' ? 'white' : 'black',
+                  fontWeight: '900',
+                  fontSize: '12px'
+                }}
+              >
+                🎬 Analyze Existing Script
+              </button>
+            </div>
+
             {/* Main Input Card */}
             <div className="retro-card">
               <div className="card-dots">
@@ -174,14 +232,27 @@ function App() {
                 <div className="dot" />
               </div>
               <div className="card-content">
-                <div className="card-label">Untitled Project</div>
-                <textarea
-                  className="lined-paper"
-                  placeholder="Start typing your logline or synopsis here..."
-                  value={storyIdea}
-                  onChange={(e) => setStoryIdea(e.target.value)}
-                  disabled={loading || isUploading}
-                />
+                <div className="card-label">
+                  {mode === 'generate' ? 'Untitled Project' : 'Existing Script'}
+                </div>
+                {mode === 'generate' ? (
+                  <textarea
+                    className="lined-paper"
+                    placeholder="Start typing your logline or synopsis here..."
+                    value={storyIdea}
+                    onChange={(e) => setStoryIdea(e.target.value)}
+                    disabled={loading || isUploading}
+                  />
+                ) : (
+                  <textarea
+                    className="lined-paper"
+                    placeholder="Paste your complete screenplay here (including title, dialogues, action lines, etc.)..."
+                    value={scriptText}
+                    onChange={(e) => setScriptText(e.target.value)}
+                    disabled={loading || isUploading}
+                    style={{ minHeight: '300px' }}
+                  />
+                )}
               </div>
             </div>
 
@@ -251,11 +322,11 @@ function App() {
 
             {/* Generate Button */}
             <button
-              onClick={handleGenerate}
-              disabled={loading || storyIdea.length < 20}
+              onClick={mode === 'generate' ? handleGenerate : handleAnalyzeScript}
+              disabled={loading || (mode === 'generate' ? storyIdea.length < 20 : scriptText.length < 100)}
               className="btn-primary"
             >
-              {loading ? `${runtime}s Processing...` : 'Generate Breakdown'}
+              {loading ? `${runtime}s Processing...` : (mode === 'generate' ? 'Generate Breakdown' : 'Analyze & Generate')}
             </button>
 
             {error && (

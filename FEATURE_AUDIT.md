@@ -275,10 +275,12 @@ User Input → Screenplay Gen → Character Gen → Scene Gen → Sound Gen → 
 **Additional Bonus Features:**
 - ✅ Scene Breakdown Generation
 - ✅ File Upload & Text Extraction
+- ✅ **Script Analysis Mode** (NEW!) - Analyze existing scripts for pre-production
 - ✅ Indie Retro UI Design
 - ✅ Dynamic Genre Tagging
 - ✅ Name Consistency Enforcement
 - ✅ Real-time Progress Tracking
+- ✅ Dual Mode UI (Generate vs Analyze)
 
 ---
 
@@ -313,9 +315,10 @@ User Input → Screenplay Gen → Character Gen → Scene Gen → Sound Gen → 
 ### Backend (Python/Flask):
 ```
 backend/
-├── app.py                          # Main Flask server with 3 endpoints
+├── app.py                          # Main Flask server with 4 endpoints
 ├── generators/
 │   ├── screenplay_generator.py     # 3-act structure + character names
+│   ├── script_analyzer.py          # Analyze existing scripts (NEW!)
 │   ├── character_generator.py      # Character profiles (name-consistent)
 │   ├── scene_generator.py          # Scene breakdown (8-12 scenes)
 │   └── sound_design_generator.py   # Music + SFX + ambience

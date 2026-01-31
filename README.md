@@ -9,11 +9,17 @@ Transform story ideas into complete screenplay outlines, character profiles, sce
 
 ## ✨ Features
 
-- 🎭 **Screenplay Generation**: AI-powered 3-act structure with plot points
+- 🎭 **Dual Mode Operation**:
+  - **Generate Mode**: Create screenplays from short story ideas
+  - **Analyze Mode**: Extract structure from existing scripts
+- 📖 **Screenplay Generation**: AI-powered 3-act structure with plot points
 - 👥 **Character Profiles**: Detailed character arcs and personality traits
+- 🎬 **Scene Breakdown**: Detailed scene-by-scene analysis with cast lists
+- 🔊 **Sound Design**: Music themes, SFX, and ambience recommendations
 - 🎨 **Indie Light Theme**: Beautiful retro-style UI with colorful fonts
 - ⚡ **Fast Generation**: ~5-10 seconds using Groq AI (free!)
 - 📱 **Responsive Design**: Works on desktop and tablet
+- 📄 **PDF Export**: One-click export of complete production package
 
 ## 🚀 Quick Start
 
@@ -78,11 +84,23 @@ Frontend runs on `http://localhost:5173`
 
 ## 🎯 Usage
 
+### Generate Mode (Create from Idea)
 1. Open http://localhost:5173 in your browser
-2. Enter your story idea (20-500 characters)
-3. Select a genre (Drama, Thriller, Comedy, Sci-Fi, Horror, Romance)
-4. Click "🚀 Generate Screenplay"
-5. View AI-generated screenplay and characters!
+2. Click "📝 Generate from Idea" button
+3. Enter your story idea (20-500 characters)
+4. Select a genre (Drama, Thriller, Comedy, Sci-Fi, Horror)
+5. Click "Generate Breakdown"
+6. View AI-generated screenplay and characters!
+
+### Analyze Mode (Existing Script)
+1. Open http://localhost:5173 in your browser
+2. Click "🎬 Analyze Existing Script" button
+3. Paste your complete screenplay (100-100,000 characters) OR upload a PDF/DOCX file
+4. Select the genre
+5. Click "Analyze & Generate"
+6. View extracted structure, characters, scenes, and sound design!
+
+📚 See [SCRIPT_ANALYSIS_GUIDE.md](SCRIPT_ANALYSIS_GUIDE.md) for detailed analysis mode documentation.
 
 ## 📁 Project Structure
 
