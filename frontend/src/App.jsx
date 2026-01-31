@@ -185,11 +185,7 @@ function App() {
       <header>
         <div>
           <h1>New Story</h1>
-          <p>Project Initiation Phase • v.1.0</p>
-        </div>
-        <div className="header-icons">
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => window.location.reload()}>⟲</button>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer' }}>⟳</button>
+          <p>AI-Generated Pre-Production Blueprint</p>
         </div>
       </header>
 
