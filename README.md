@@ -23,7 +23,7 @@ Scriptoria is a professional workspace for filmmakers and writers. It transforms
 
 ---
 
-## �️ Tech Stack
+##  Tech Stack
 
 ### Backend
 - **Flask**: Python-based API orchestration.
