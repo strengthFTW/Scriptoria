@@ -218,6 +218,21 @@ textarea.lined-paper {
   transform: scale(1.05);
 }
 
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .upload-text {
   text-align: center;
 }
