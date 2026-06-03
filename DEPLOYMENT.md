@@ -1,68 +1,95 @@
 # Scriptoria - Production Deployment Guide 🚀
 
-This guide outlines how to deploy the full-stack Scriptoria workspace to production using **Render** (Backend) and **Vercel** (Frontend).
+This guide deploys the full-stack Scriptoria app as a **single Render Web Service** that serves both the backend API and the built frontend.
 
-## 🌍 Architecture Overview
+## 🌍 Architecture
 - **Storage/Auth**: Supabase (Cloud)
 - **AI Engine**: Groq (API)
-- **Backend**: Render (Web Service)
-- **Frontend**: Vercel (Static Site)
+- **App Host**: Render Web Service (single service, Flask serves React)
+- **Frontend**: Built by Render into `frontend/dist`, then served by Flask
 
 ---
 
-## 🏗️ Step 1: Deploy Backend (Render)
+## 🏗️ Deploy to Render
 
-1. **Connect Repository**: Link your GitHub repo to [Render](https://render.com).
-2. **Create Web Service**:
-   - **Name**: `scriptoria-api`
-   - **Root Directory**: `backend`
+### Option A — One-click with `render.yaml` (Recommended)
+The repo already has a `render.yaml` blueprint. Just:
+1. Connect your GitHub repo to [Render](https://render.com).
+2. Render will auto-detect the `render.yaml` and configure the service.
+3. Set the required environment variables (see below) and deploy.
+
+### Option B — Manual Setup
+1. **Create a Web Service** in Render:
+   - **Root Directory**: leave blank (top-level)
    - **Environment**: `Python`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app`
-3. **Environment Variables**:
-   Add these in the Render dashboard:
-   - `GROQ_API_KEY`: Your production API key.
-   - `DATABASE_URL`: (Optional) If using a separate backend DB.
-4. **Copy URL**: Save your new Render URL (e.g., `https://scriptoria-api.onrender.com`).
+   - **Build Command**:
+     ```bash
+     pip install -r backend/requirements.txt && cd frontend && npm install && npm run build
+     ```
+   - **Start Command**:
+     ```bash
+     cd backend && gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 2 app:app
+     ```
 
 ---
 
-## 🎨 Step 2: Deploy Frontend (Vercel)
+## 🔑 Environment Variables to Set in Render Dashboard
 
-1. **Connect Repository**: Link your GitHub repo to [Vercel](https://vercel.com).
-2. **Configure Project**:
-   - **Framework Preset**: `Vite`
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-3. **Environment Variables**:
-   Add these in the Vercel project settings:
-   - `VITE_API_URL`: Your Render backend URL.
-   - `VITE_SUPABASE_URL`: Your Supabase Project URL.
-   - `VITE_SUPABASE_ANON_KEY`: Your Supabase Anon Key.
-4. **Deploy**: Click deploy and get your live `.vercel.app` URL.
+Set these under **Environment → Environment Variables** in your Render service:
+
+| Variable | Value | Notes |
+|---|---|---|
+| `GROQ_API_KEY` | `gsk_...` | Your Groq API key |
+| `JWT_SECRET_KEY` | (random string) | Render can auto-generate this |
+| `FLASK_ENV` | `production` | |
+| `VITE_SUPABASE_URL` | `https://xxx.supabase.co` | From your Supabase project |
+| `VITE_SUPABASE_ANON_KEY` | `eyJ...` | From your Supabase project |
+
+> ⚠️ **CRITICAL**: Do NOT set `VITE_API_URL` on Render.
+> The frontend already defaults to relative URLs (`''`) in production,
+> which means it calls the same Render service. Setting it to
+> `http://localhost:5000` (or anything else) will break it.
 
 ---
 
-## 🔐 Step 3: Configure Supabase
+## 🔐 Configure Supabase
 
-1. **Auth Settings**:
-   Add your Vercel URL to the **Site URL** and **Redirect URLs** in the Supabase Auth Settings.
-2. **CORS**:
-   (Optional) If you face CORS issues, add your Vercel domain to the `CORS` setup in `backend/app.py`.
+After getting your Render URL (e.g. `https://scriptoria.onrender.com`):
+
+1. Go to your Supabase project → **Authentication → URL Configuration**
+2. Set **Site URL** to your Render URL
+3. Add your Render URL to **Redirect URLs**
 
 ---
 
 ## ✅ Post-Deployment Checklist
-- [ ] Test **Login/Register** flow.
-- [ ] Verify **Screenplay Generation** calls the live Render API.
-- [ ] Confirm **Save to Library** persists data to Supabase.
-- [ ] Test **PDF Export** download.
+- [ ] Open your Render URL — you should see the Scriptoria UI (not just JSON)
+- [ ] Test **Login/Register** flow
+- [ ] Verify **Screenplay Generation** works (calls `/generate`)
+- [ ] Test **PDF Export** download
+- [ ] Check **Save to Library** persists to Supabase
 
 ---
 
-## 💡 Pro-Tips
-- **Cold Starts**: Render's free tier "sleeps" after 15 minutes. The first API call might take ~30 seconds to wake up.
-- **Logs**: Use `vercel logs` and Render's **Events** tab to debug production issues.
+## 🐛 Troubleshooting
 
-🎬 **Scriptoria is now live for the world to use!**
+**Only seeing JSON / backend response instead of the UI?**
+- The `frontend/dist` wasn't built. Check Render build logs for npm errors.
+- Make sure the build command runs `cd frontend && npm install && npm run build`.
+
+**Frontend loads but API calls fail?**
+- You accidentally set `VITE_API_URL` to something. Remove it from Render env vars.
+- The `VITE_*` variables must be set **before** the build runs (they get baked in at build time).
+
+**Auth / Supabase not working?**
+- Add your Render URL to Supabase Auth → Redirect URLs.
+
+**Cold starts (first request is slow)?**
+- Render free tier sleeps after 15 minutes of inactivity. The first request takes ~30s to wake up. Upgrade to a paid plan to avoid this.
+
+---
+
+💡 **Local development**: Run frontend (`npm run dev`) and backend (`python app.py`) separately.
+The production single-service setup only applies on Render.
+
+🎬 **Scriptoria is now live as one Render service!**

@@ -1,10 +1,14 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from dotenv import load_dotenv
 import os
 import io
 from datetime import datetime, timedelta
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIST_DIR = os.path.abspath(os.path.join(BASE_DIR, '..', 'frontend', 'dist'))
 
 # Load environment variables
 load_dotenv()
@@ -48,7 +52,11 @@ CORS(app, resources={
 
 @app.route('/')
 def home():
-    """Root endpoint to verify backend is running"""
+    """Serve the frontend in production, otherwise show API status."""
+    index_path = os.path.join(FRONTEND_DIST_DIR, 'index.html')
+    if os.path.exists(index_path):
+        return send_from_directory(FRONTEND_DIST_DIR, 'index.html')
+
     return jsonify({
         "message": "🎬 Scriptoria Backend API",
         "status": "running",
@@ -61,6 +69,27 @@ def home():
             "/export_pdf": "Export to PDF (POST)"
         }
     })
+
+
+@app.route('/<path:path>')
+def spa_fallback(path):
+    """Serve frontend assets and support React Router refreshes."""
+    # List of all backend API routes — return 404 for these if not matched above
+    API_ROUTES = ('generate', 'analyze_script', 'export_pdf', 'upload', 'health', 'auth')
+    if path.split('/')[0] in API_ROUTES:
+        return jsonify({"error": "Not found"}), 404
+
+    # Try to serve a static asset (js, css, images, etc.)
+    asset_path = os.path.join(FRONTEND_DIST_DIR, path)
+    if os.path.exists(asset_path) and os.path.isfile(asset_path):
+        return send_from_directory(FRONTEND_DIST_DIR, path)
+
+    # Fallback to index.html for React Router client-side routing
+    index_path = os.path.join(FRONTEND_DIST_DIR, 'index.html')
+    if os.path.exists(index_path):
+        return send_from_directory(FRONTEND_DIST_DIR, 'index.html')
+
+    return jsonify({"error": "Frontend not built. Run: cd frontend && npm install && npm run build"}), 404
 
 @app.route('/generate', methods=['POST'])
 # @jwt_required()  # Temporarily disabled for testing

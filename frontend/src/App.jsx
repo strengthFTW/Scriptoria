@@ -5,7 +5,7 @@ import { useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import './index.css';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://scriptoria-ua29.onrender.com';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
 function App({ initialStory, onStorySaved }) {
   const { user } = useAuth();
