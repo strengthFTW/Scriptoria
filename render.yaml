@@ -2,8 +2,9 @@ services:
   - type: web
     name: scriptoria
     runtime: python
-    buildCommand: pip install -r backend/requirements.txt && cd frontend && npm install && npm run build
-    startCommand: cd backend && gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 2 app:app
+    rootDir: .
+    buildCommand: "pip install -r backend/requirements.txt && cd frontend && npm install && npm run build"
+    startCommand: "cd backend && gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 2 app:app"
     envVars:
       - key: GROQ_API_KEY
         sync: false        # set manually in Render dashboard
@@ -13,5 +14,5 @@ services:
         value: production
       - key: FLASK_DEBUG
         value: false
-      # VITE_API_URL must NOT be set here — empty means same-origin (relative URLs)
-      # Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in the Render dashboard
+      # VITE_API_URL must NOT be set — empty string = same-origin relative URLs (correct for single-service)
+      # Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY manually in Render dashboard
